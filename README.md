@@ -28,7 +28,9 @@ Install
 
 Usage
 -----
-The `ezStruct` is a global static objects that manage structure definitions.
+The `ezStruct` is a global static object that manage structure definitions
+and memory allocations of those definitions.
+
 To define a new structure simply call:
 ```javascript
 var defStruct = ezStruct.define("myStruct");

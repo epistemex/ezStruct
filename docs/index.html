@@ -110,8 +110,9 @@
 <li>Git using SSH: <code>git clone git@github.com:epistemex/ezStruct.git</code></li>
 <li>Download <a href="https://github.com/epistemex/ezStruct/archive/master.zip">zip archive</a> and extract.</li>
 </ul>
-<h2>Usage</h2><p>The <code>ezStruct</code> is a global static objects that manage structure definitions.
-To define a new structure simply call:</p>
+<h2>Usage</h2><p>The <code>ezStruct</code> is a global static object that manage structure definitions
+and memory allocations of those definitions.</p>
+<p>To define a new structure simply call:</p>
 <pre class="prettyprint source lang-javascript"><code>var defStruct = ezStruct.define(&quot;myStruct&quot;);
 var t = ezStruct.enums;
 
