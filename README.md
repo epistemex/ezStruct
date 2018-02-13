@@ -3,6 +3,12 @@
 
 Create virtual structures for binary data in JavaScript.
 
+Virtual structures are very useful for binary data packets and file
+parsing.
+
+Store structured data as bytes and send over the net in an highly
+efficient way.
+
 
 Features
 --------
