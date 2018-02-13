@@ -1,6 +1,13 @@
 Change log for ezStruct
 -----------------------
 
+0.2.0-alpha
+ADD: clone() clones a allocated structure and its data
+ADD: fromBuffer() creates a struct def. and fills with data from buffer
+IMP: Internal tweaks
+FIX: endianess wasn't propagated to sub-structure.
+FIX: UBYTE alias to UINT8
+
 0.1.0-alpha
 NEW: Initial release
 

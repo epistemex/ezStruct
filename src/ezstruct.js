@@ -1,5 +1,5 @@
 /*!
-	ezStruct ver 0.1.0-alpha
+	ezStruct ver 0.1.1-alpha
 	Copyright (c) 2018 Epistemex
 	www.epistemex.com
 */
@@ -28,29 +28,30 @@ var ezStruct = (function() {
     */
     enums: {
       UINT8  : 0,
-      UBYTE  : 1,
-      UINT16 : 2,
-      USHORT : 2,
-      UINT32 : 3,
-      UINT   : 3,
-      UINT64 : 4,
-      ULONG  : 4,
-      INT8   : 5,
-      BYTE   : 5,
-      BOOL   : 5,
-      INT16  : 6,
-      SHORT  : 6,
-      INT32  : 7,
-      INT    : 7,
-      INT64  : 9,
-      LONG   : 9,
-      FLOAT32: 10,
-      FLOAT  : 10,
-      FLOAT64: 11,
-      DOUBLE : 11,
-      CHAR   : 14,
-      STRING : 15,
-      STRUCT : 16
+      UBYTE  : 0,
+      UINT16 : 1,
+      USHORT : 1,
+      UINT32 : 2,
+      UINT   : 2,
+      UINT64 : 3,
+      ULONG  : 3,
+      INT8   : 4,
+      BYTE   : 4,
+      BOOL   : 4,
+      INT16  : 5,
+      SHORT  : 5,
+      INT32  : 6,
+      INT    : 6,
+      INT64  : 7,
+      LONG   : 7,
+      FLOAT32: 8,
+      FLOAT  : 8,
+      FLOAT64: 9,
+      DOUBLE : 9,
+      CHAR   : 10,
+      BYTES  : 10,
+      STRING : 11,
+      STRUCT : 12
     },
 
     /**
@@ -58,8 +59,12 @@ var ezStruct = (function() {
      * @param {string} name - internal name of this structure. This name
      * is used with alloc() and with definition type enums.STRUCT.
      * @returns {*} Contains method `def` to define each field.
+     * @memberOf ezStruct
      */
     define: function(name) {
+
+      // todo create an instance object instead
+
       var struct = {name: name, defs: []}, i;
 
       // check if name is in use
@@ -73,6 +78,11 @@ var ezStruct = (function() {
         /**
          * Define a new field in the structure. The structure
          * will keep the same order as the definition order.
+         *
+         * CHAR, BYTES, STRING takes size (in bytes) as third argument.
+         *
+         * STRUCT takes name of a defined structure as third argument.
+         *
          * @param {enums} type - field type.
          * @param {string} name - field name. This will be the name you use in the code
          * so make sure it will be valid, or call it using ["!strange.name"].
@@ -80,6 +90,7 @@ var ezStruct = (function() {
          * given. struct require a struct name as string.
          */
         def: function(type, name, opt) {
+          if (type < 0 || type > ezStruct.enums.STRUCT) throw "Invalid type.";
           struct.defs.push({name: name, type: type, opt: opt})
         }
       }
@@ -94,6 +105,7 @@ var ezStruct = (function() {
      * @returns {*} The returned buffer object can be used to update the structure buffer. The available
      * properties depends on the field definitions. Common properties for all buffers are: `buffer`,
      * `uint8`, `view`, name and length.
+     * @memberOf ezStruct
      */
     alloc: function(name, le) {
 
@@ -103,7 +115,7 @@ var ezStruct = (function() {
           as a cfg object specially for this call (position and length of field).
           It also references itself to access the buffer and view.
        */
-      var struct, i, size = 0, mem = {}, subs = [];
+      var struct, i, size = 0, mem = {}, subs = []; //todo support for initial default values
 
       // check name
       for(i = 0; i < structs.length; i++) {
@@ -113,10 +125,7 @@ var ezStruct = (function() {
         }
       }
 
-      if (!struct) throw "Structure with name not defined.";
-
-      // Create a reference to the original structure
-      mem._struct = struct;
+      if (!struct) throw "Structure not defined.";
 
       // loop through each definition in the struct
       struct.defs.forEach(function(def) {
@@ -165,14 +174,13 @@ var ezStruct = (function() {
             size += def.opt; break;
 
           case t.STRUCT:
-            var subStruct = ezStruct.alloc(def.opt);
+            var subStruct = ezStruct.alloc(def.opt, le);
             subs.push({struct: subStruct, pos: size, len: subStruct.uint8.length});
             Object.defineProperty(mem, def.name, {
               get: _getSTRUCT.bind({struct: subStruct})
             });
             size += subStruct.uint8.length; break;
         }
-
       });
 
       // setup buffers, name and length properties
@@ -203,52 +211,84 @@ var ezStruct = (function() {
           set: set.bind(_bind(pos, size))
         });
 
-        // binds each function with common references as well as local position and length
+        // binds each function with common references as well as local position and length.
+        // mem is referenced since view (property on mem) is created later.
         function _bind(pos, len) {
-          return {mem: mem, cfg: {pos: pos, len: len}, le: !!le}
+          return {m: mem, pos: pos, len: len, le: !!le}
         }
       }
 
       // Internal workings. NOTE: Each "this" references the object set via _defProp().
-      function _getINT8() {return this.mem.view.getInt8(this.cfg.pos)}
-      function _setINT8(v) {return this.mem.view.setInt8(this.cfg.pos, v)}
-      function _getINT16() {return this.mem.view.getInt16(this.cfg.pos, this.cfg.le)}
-      function _setINT16(v) {return this.mem.view.setInt16(this.cfg.pos, v, this.cfg.le)}
-      function _getINT32() {return this.mem.view.getInt32(this.cfg.pos, this.cfg.le)}
-      function _setINT32(v) {return this.mem.view.setInt32(this.cfg.pos, v, this.cfg.le)}
+      function _getINT8() {return this.m.view.getInt8(this.pos)}
+      function _setINT8(v) {this.m.view.setInt8(this.pos, v)}
+      function _getINT16() {return this.m.view.getInt16(this.pos, this.le)}
+      function _setINT16(v) {this.m.view.setInt16(this.pos, v, this.le)}
+      function _getINT32() {return this.m.view.getInt32(this.pos, this.le)}
+      function _setINT32(v) {this.m.view.setInt32(this.pos, v, this.le)}
 
-      function _getUINT8() {return this.mem.view.getUint8(this.cfg.pos )}
-      function _setUINT8(v) {return this.mem.view.setUint8(this.cfg.pos, v)}
-      function _getUINT16() {return this.mem.view.getUint16(this.cfg.pos, this.cfg.le)}
-      function _setUINT16(v) {return this.mem.view.setUint16(this.cfg.pos, v, this.cfg.le)}
-      function _getUINT32() {return this.mem.view.getUint32(this.cfg.pos, this.cfg.le)}
-      function _setUINT32(v) {return this.mem.view.setUint32(this.cfg.pos, v, this.cfg.le)}
+      function _getUINT8() {return this.m.view.getUint8(this.pos )}
+      function _setUINT8(v) {this.m.view.setUint8(this.pos, v)}
+      function _getUINT16() {return this.m.view.getUint16(this.pos, this.le)}
+      function _setUINT16(v) {this.m.view.setUint16(this.pos, v, this.le)}
+      function _getUINT32() {return this.m.view.getUint32(this.pos, this.le)}
+      function _setUINT32(v) {this.m.view.setUint32(this.pos, v, this.le)}
 
-      function _getFLOAT32() {return this.mem.view.getFloat32(this.cfg.pos, this.cfg.le)}
-      function _setFLOAT32(v) {return this.mem.view.setFloat32(this.cfg.pos, v, this.cfg.le)}
-      function _getFLOAT64() {return this.mem.view.getFloat64(this.cfg.pos, this.cfg.le)}
-      function _setFLOAT64(v) {return this.mem.view.setFloat64(this.cfg.pos, v, this.cfg.le)}
+      function _getFLOAT32() {return this.m.view.getFloat32(this.pos, this.le)}
+      function _setFLOAT32(v) {this.m.view.setFloat32(this.pos, v, this.le)}
+      function _getFLOAT64() {return this.m.view.getFloat64(this.pos, this.le)}
+      function _setFLOAT64(v) {this.m.view.setFloat64(this.pos, v, this.le)}
 
-      function _getCHAR() {return this.mem.uint8.subarray(this.cfg.pos, this.cfg.len)}
+      function _getCHAR() {return this.m.uint8.subarray(this.pos, this.len)}
       function _setCHAR(bytes) {
-        if (bytes.length > this.cfg.len) throw "Illegal size.";
-        this.mem.uint8.set(bytes, this.cfg.pos )
+        if (bytes.length > this.len) throw "Illegal size.";
+        this.m.uint8.set(bytes, this.pos)
       }
 
       function _getSTR() {
-        var bytes = this.mem.uint8.subarray(this.cfg.pos , this.cfg.pos + this.cfg.len),
+        var bytes = this.m.uint8.subarray(this.pos , this.pos + this.len),
             i = bytes.indexOf(0);
         return new TextDecoder().decode(i < 0 ? bytes : bytes.subarray(0, i))
       }
 
       function _setSTR(str) {
         var bytes = new TextEncoder().encode(str + "\0");
-        if (bytes.length > this.cfg.len) throw "Illegal size.";
-        this.mem.uint8.set(bytes, this.cfg.pos )
+        if (bytes.length > this.len) throw "Illegal size.";
+        this.m.uint8.set(bytes, this.pos )
       }
 
       function _getSTRUCT() {return this.struct}
 
+      return mem
+    },
+
+    /**
+     * Creates a new structure buffer and fills it with data from given buffer.
+     * If the source buffer is shorter than structure buffer the data is filled
+     * from the beginning. If larger then the data is truncated to fit into
+     * the structure buffer.
+     *
+     * @param {string} name - name of structure to create and fill.
+     * @param {*} buffer - source buffer (ArrayBuffer or a TypedArray view).
+     * @param {boolean} [le=false] - little-endian flag
+     * @returns {*} New structure with filled buffer
+     * @memberOf ezStruct
+     */
+    fromBuffer: function(name, buffer, le) {
+      var mem = ezStruct.alloc(name, le);
+      if (ArrayBuffer.isView(buffer)) buffer = buffer.buffer;
+      mem.uint8.set(new Uint8Array(buffer, 0, Math.min(mem.length, buffer.byteLength)));
+      return mem
+    },
+
+    /**
+     * Clones a allocated structure and the content of the source structure buffer.
+     * @param {*} memStruct - source structure buffer
+     * @returns {*} New instance of a allocated structure
+     * @memberOf ezStruct
+     */
+    clone: function(memStruct) {
+      var mem = ezStruct.alloc(memStruct.name);
+      mem.uint8.set(memStruct.uint8.slice(0, mem.length));
       return mem
     }
 
