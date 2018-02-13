@@ -1,0 +1,31 @@
+<html>
+<head>
+</head>
+<body style="background: transparent;">
+    <script src="scripts/docstrap.lib.js"></script>
+    <script src="scripts/lunr.min.js"></script>
+    <script src="scripts/fulltext-search.js"></script>
+
+    <script type="text/x-docstrap-searchdb">
+    {"global.html":{"id":"global.html","title":"Global","body":" ezStruct Namespaces ezStruct Global allocdefdefineenums Global Members &lt;readonly&gt; enums :number Types enums definitions. Notice that there are several aliases included for convenience. Also notice the following: (U)LONG is 64-bit, (U)INT is 32-bit and (U)SHORT is 16 bit in this context. STRING is a NUL-terminated string and not an alias for CHAR. CHAR is a raw byte buffer. Use this type for undefined types and lengths. STRUCT is special for this solution and refer to a sub-structure (by name). Type: number Properties: Name Type Default Description UINT8 number 0 UBYTE number 1 UINT16 number 2 USHORT number 2 UINT32 number 3 UINT number 3 UINT64 number 4 ULONG number 4 INT8 number 5 BYTE number 5 BOOL number 5 INT16 number 6 SHORT number 6 INT32 number 7 INT number 7 INT64 number 9 LONG number 9 FLOAT32 number 10 FLOAT number 10 FLOAT64 number 11 DOUBLE number 11 CHAR number 14 STRING number 15 STRUCT number 16 Methods alloc(name [, le]) Allocates the actual memory for the structure and provides properties to set or get each field. The size of the buffer depends on the field definitions. Parameters: Name Type Argument Default Description name string the name of the structure to allocate memory for. le boolean &lt;optional&gt; false endianess, defaults to big-endian. Set to true for little-endian. Returns: The returned buffer object can be used to update the structure buffer. The available properties depends on the field definitions. Common properties for all buffers are: buffer, uint8, view, name and length. Type * def(type, name [, opt]) Define a new field in the structure. The structure will keep the same order as the definition order. Parameters: Name Type Argument Description type enums field type. name string field name. This will be the name you use in the code so make sure it will be valid, or call it using [&quot;!strange.name&quot;]. opt * &lt;optional&gt; only required for some types. char/string requires length to be given. struct require a struct name as string. define(name) Create a new structure definition. Parameters: Name Type Description name string internal name of this structure. This name is used with alloc() and with definition type enums.STRUCT. Returns: Contains method def to define each field. Type * × Search results Close Epistemex at GitHub "},"namespaces.list.html":{"id":"namespaces.list.html","title":"Namespaces","body":" ezStruct Namespaces ezStruct Global allocdefdefineenums Namespaces Namespaces ezStruct × Search results Close Epistemex at GitHub "},"index.html":{"id":"index.html","title":"Index","body":" ezStruct Namespaces ezStruct Global allocdefdefineenums ezStructCreate virtual structures for binary data in JavaScript. Features Define several structures by name Easy to define field types and names Nested structures possible Allocates buffer size based on definition Update buffer fields by name and value Supports char, string, struct, integers, floats Several aliases for types Small, fast and efficient InstallezStruct can be installed in various ways: Git using HTTPS: git clone https://github.com/epistemex/ezStruct.git Git using SSH: git clone git@github.com:epistemex/ezStruct.git Download zip archive and extract. UsageThe ezStruct is a global static objects that manage structure definitions. To define a new structure simply call: var defStruct = ezStruct.define(&quot;myStruct&quot;); var t = ezStruct.enums; // define fields defStruct.def(t.UINT32, &quot;field1&quot;); defStruct.def(t.UINT16, &quot;field2&quot;); defStruct.def(t.STRING, &quot;text&quot;, 100); // NUL-terminated string defStruct.def(t.CHAR , &quot;data&quot;, 100); // raw char (byte) bufferNext, create the actual memory byte-buffer like this: var memStruct = ezStruct.alloc(&quot;myStruct&quot;); // set fields memStruct.field1 = 0x12345678; memStruct.field2 = 0x1234; memStruct.text = &quot;Hello structures!&quot;; // read back var v1 = memStruct.field2; // =&gt; 0x1234 var str = memStruct.text; // =&gt; &quot;Hello structures!&quot; // get raw buffer var bytes = mem.uint8; var arrBuffer = mem.buffer;Nested structure is possible (and recursively): var defStruct2 = ezStruct.define(&quot;myStruct2&quot;); // Define an existing structure defintion as field in this def. defStruct2.def(t.STRUCT, &quot;subStruct&quot;, &quot;myStruct&quot;); // type, field name, def. name defStruct2.def(t.BOOL , &quot;status&quot;); // etc. // ... // allocate a buffer for the new defined structure var memStruct2 = ezStruct.alloc(&quot;myStruct2&quot;, true); // use little-endian // access nested struct: memStruct2.subStruct.text = &quot;Hello sub-structure!&quot;;Also see ezBuffers enhanced data-view. Includes bit-tools (ezBits). IssuesSee the issue tracker for details. ContributorsSee contributors here. LicenseReleased under MIT license. You may use this class in both commercial and non-commercial projects provided that full header (minified and developer versions) is included. © Epistemex 2018 × Search results Close Epistemex at GitHub "},"ezStruct.html":{"id":"ezStruct.html","title":"Namespace: ezStruct","body":" ezStruct Namespaces ezStruct Global allocdefdefineenums Namespace: ezStruct ezStruct ezStruct allows for defining and creating binary structures. × Search results Close Epistemex at GitHub "}}
+    </script>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            Searcher.init();
+        });
+
+        $(window).on("message", function(msg) {
+            var msgData = msg.originalEvent.data;
+
+            if (msgData.msgid != "docstrap.quicksearch.start") {
+                return;
+            }
+
+            var results = Searcher.search(msgData.searchTerms);
+
+            window.parent.postMessage({"results": results, "msgid": "docstrap.quicksearch.done"}, "*");
+        });
+    </script>
+</body>
+</html>

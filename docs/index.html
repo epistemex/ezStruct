@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>ezStruct Index</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.lumen.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top ">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">ezStruct</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="namespaces.list.html" class="dropdown-toggle" data-toggle="dropdown">Namespaces<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="ezStruct.html">ezStruct</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#alloc">alloc</a></li><li><a href="global.html#def">def</a></li><li><a href="global.html#define">define</a></li><li><a href="global.html#enums">enums</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-8">
+	
+		<div id="main">
+			
+
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+
+
+
+
+
+    <section class="readme-section">
+        <article><h1>﻿ezStruct</h1><p>Create virtual structures for binary data in JavaScript.</p>
+<h2>Features</h2><ul>
+<li>Define several structures by name</li>
+<li>Easy to define field types and names</li>
+<li>Nested structures possible</li>
+<li>Allocates buffer size based on definition</li>
+<li>Update buffer fields by name and value</li>
+<li>Supports char, string, struct, integers, floats</li>
+<li>Several aliases for types</li>
+<li>Small, fast and efficient</li>
+</ul>
+<h2>Install</h2><p><strong>ezStruct</strong> can be installed in various ways:</p>
+<ul>
+<li>Git using HTTPS: <code>git clone https://github.com/epistemex/ezStruct.git</code></li>
+<li>Git using SSH: <code>git clone git@github.com:epistemex/ezStruct.git</code></li>
+<li>Download <a href="https://github.com/epistemex/ezStruct/archive/master.zip">zip archive</a> and extract.</li>
+</ul>
+<h2>Usage</h2><p>The <code>ezStruct</code> is a global static objects that manage structure definitions.
+To define a new structure simply call:</p>
+<pre class="prettyprint source lang-javascript"><code>var defStruct = ezStruct.define(&quot;myStruct&quot;);
+var t = ezStruct.enums;
+
+// define fields
+defStruct.def(t.UINT32, &quot;field1&quot;);
+defStruct.def(t.UINT16, &quot;field2&quot;);
+defStruct.def(t.STRING, &quot;text&quot;, 100);   // NUL-terminated string
+defStruct.def(t.CHAR  , &quot;data&quot;, 100);   // raw char (byte) buffer</code></pre><p>Next, create the actual memory byte-buffer like this:</p>
+<pre class="prettyprint source lang-javascript"><code>var memStruct = ezStruct.alloc(&quot;myStruct&quot;);
+
+// set fields
+memStruct.field1 = 0x12345678;
+memStruct.field2 = 0x1234;
+memStruct.text = &quot;Hello structures!&quot;;
+
+// read back
+var v1 = memStruct.field2;              // => 0x1234
+var str = memStruct.text;               // => &quot;Hello structures!&quot;
+
+// get raw buffer
+var bytes = mem.uint8;
+var arrBuffer = mem.buffer;</code></pre><p>Nested structure is possible (and recursively):</p>
+<pre class="prettyprint source lang-javascript"><code>var defStruct2 = ezStruct.define(&quot;myStruct2&quot;);
+
+// Define an existing structure defintion as field in this def.
+defStruct2.def(t.STRUCT, &quot;subStruct&quot;, &quot;myStruct&quot;);    // type, field name, def. name
+defStruct2.def(t.BOOL  , &quot;status&quot;);                   // etc.
+// ...
+
+// allocate a buffer for the new defined structure
+var memStruct2 = ezStruct.alloc(&quot;myStruct2&quot;, true);   // use little-endian
+
+// access nested struct:
+memStruct2.subStruct.text = &quot;Hello sub-structure!&quot;;</code></pre><h2>Also see</h2><ul>
+<li><a href="https://github.com/epistemex/ezBuffer">ezBuffers</a> enhanced data-view. Includes bit-tools (ezBits).</li>
+</ul>
+<h2>Issues</h2><p>See the <a href="https://github.com/epistemex/ezStruct/issues">issue tracker</a> for details.</p>
+<h2>Contributors</h2><p>See <a href="https://github.com/epistemex/ezStruct/graphs/master">contributors</a> here.</p>
+<h2>License</h2><p>Released under <a href="http://choosealicense.com/licenses/mit/">MIT license</a>. You may use this class in both commercial and non-commercial projects provided that full header (minified and developer versions) is included.</p>
+<p><em>&copy; Epistemex 2018</em></p>
+<p><img src="https://i.imgur.com/GP6Q3v8.png" alt="Epistemex"></p></article>
+    </section>
+
+
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+		<div class="col-md-3">
+			<div id="toc" class="col-md-3 hidden-xs hidden-sm hidden-md"></div>
+		</div>
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+	<p><b><a href='https://github.com/epistemex/'>Epistemex at GitHub</a></b></p>
+
+
+	<span class="copyright">
+	Copyright &copy; 2018 Epistemex
+	</span>
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a>
+	
+		on Tue Feb 13th 2018
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : false,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>
