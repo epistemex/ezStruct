@@ -47,7 +47,7 @@ var t = ezStruct.enums;
 // define fields
 defStruct.def(t.UINT32, "field1");
 defStruct.def(t.UINT16, "field2");
-defStruct.def(t.STRING, "text", 100);   // NUL-terminated string, max 100 bytes
+defStruct.def(t.STRING, "text", 100);   // NUL-terminated UTF8 string, max 100 bytes
 defStruct.def(t.CHAR  , "data", 100);   // raw char (byte) buffer
 ```
 
