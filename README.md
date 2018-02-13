@@ -6,19 +6,21 @@ Create virtual structures for binary data in JavaScript.
 
 Features
 --------
-- Define several structures by name
-- Easy to define field types and names
-- Nested structures possible
-- Allocates buffer size based on definition
-- Update buffer fields by name and value
-- Supports char, string, struct, integers, floats
-- Several aliases for types
-- Small, fast and efficient
+- Define unlimited structures by name
+- Allocate memory for structures by name, size by definitions.
+- Easy to define field types, names and sizes.
+- Multi-level nested structures is supported
+- Nested structures accessed using chained properties
+- Read/write to/from structure fields using properties
+- Supports char, string, struct, integers, floats fields
+- Several convenient aliases for the enumerated types
+
+All data is written/read directly to/from the underlying ArrayBuffer
+which allows for efficient memory use as well fast read and write.
 
 
 Install
 -------
-
 **ezStruct** can be installed in various ways:
 
 - Git using HTTPS: `git clone https://github.com/epistemex/ezStruct.git`
@@ -39,11 +41,12 @@ var t = ezStruct.enums;
 // define fields
 defStruct.def(t.UINT32, "field1");
 defStruct.def(t.UINT16, "field2");
-defStruct.def(t.STRING, "text", 100);   // NUL-terminated string
+defStruct.def(t.STRING, "text", 100);   // NUL-terminated string, max 100 bytes
 defStruct.def(t.CHAR  , "data", 100);   // raw char (byte) buffer
 ```
 
-Next, create the actual memory byte-buffer like this:
+Next, create the actual memory byte-buffer like this. This approach
+allows you to create several independent buffers for the same definitions:
 ```javascript
 var memStruct = ezStruct.alloc("myStruct");
 
@@ -56,31 +59,33 @@ memStruct.text = "Hello structures!";
 var v1 = memStruct.field2;              // => 0x1234
 var str = memStruct.text;               // => "Hello structures!"
 
-// get raw buffer
-var bytes = mem.uint8;
-var arrBuffer = mem.buffer;
+// get the raw byte buffer
+var bytes = memStruct.uint8;
+var arrBuffer = memStruct.buffer;
 ```
 
 Nested structure is possible (and recursively):
 ```javascript
 var defStruct2 = ezStruct.define("myStruct2");
 
-// Define an existing structure defintion as field in this def.
+// Define an existing structure definition as field in this definition
 defStruct2.def(t.STRUCT, "subStruct", "myStruct");    // type, field name, def. name
 defStruct2.def(t.BOOL  , "status");                   // etc.
 // ...
 
 // allocate a buffer for the new defined structure
-var memStruct2 = ezStruct.alloc("myStruct2", true);   // use little-endian
+var memStruct2 = ezStruct.alloc("myStruct2", true);   // true = use little-endian
 
-// access nested struct:
+// access nested struct using chained propterties.
+// Data written to same buffer as main structure.
 memStruct2.subStruct.text = "Hello sub-structure!";
 ```
+
 
 Also see
 --------
 
-- [ezBuffers](https://github.com/epistemex/ezBuffer) enhanced data-view. Includes bit-tools (ezBits).
+- [ezBuffers](https://github.com/epistemex/ezBuffer) - enhanced data-view. Includes bit-tools (ezBits).
 
 
 Issues

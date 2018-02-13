@@ -95,15 +95,17 @@
     <section class="readme-section">
         <article><h1>﻿ezStruct</h1><p>Create virtual structures for binary data in JavaScript.</p>
 <h2>Features</h2><ul>
-<li>Define several structures by name</li>
-<li>Easy to define field types and names</li>
-<li>Nested structures possible</li>
-<li>Allocates buffer size based on definition</li>
-<li>Update buffer fields by name and value</li>
-<li>Supports char, string, struct, integers, floats</li>
-<li>Several aliases for types</li>
-<li>Small, fast and efficient</li>
+<li>Define unlimited structures by name</li>
+<li>Allocate memory for structures by name, size by definitions.</li>
+<li>Easy to define field types, names and sizes.</li>
+<li>Multi-level nested structures is supported</li>
+<li>Nested structures accessed using chained properties</li>
+<li>Read/write to/from structure fields using properties</li>
+<li>Supports char, string, struct, integers, floats fields</li>
+<li>Several convenient aliases for the enumerated types</li>
 </ul>
+<p>All data is written/read directly to/from the underlying ArrayBuffer
+which allows for efficient memory use as well fast read and write.</p>
 <h2>Install</h2><p><strong>ezStruct</strong> can be installed in various ways:</p>
 <ul>
 <li>Git using HTTPS: <code>git clone https://github.com/epistemex/ezStruct.git</code></li>
@@ -119,8 +121,9 @@ var t = ezStruct.enums;
 // define fields
 defStruct.def(t.UINT32, &quot;field1&quot;);
 defStruct.def(t.UINT16, &quot;field2&quot;);
-defStruct.def(t.STRING, &quot;text&quot;, 100);   // NUL-terminated string
-defStruct.def(t.CHAR  , &quot;data&quot;, 100);   // raw char (byte) buffer</code></pre><p>Next, create the actual memory byte-buffer like this:</p>
+defStruct.def(t.STRING, &quot;text&quot;, 100);   // NUL-terminated string, max 100 bytes
+defStruct.def(t.CHAR  , &quot;data&quot;, 100);   // raw char (byte) buffer</code></pre><p>Next, create the actual memory byte-buffer like this. This approach
+allows you to create several independent buffers for the same definitions:</p>
 <pre class="prettyprint source lang-javascript"><code>var memStruct = ezStruct.alloc(&quot;myStruct&quot;);
 
 // set fields
@@ -132,22 +135,23 @@ memStruct.text = &quot;Hello structures!&quot;;
 var v1 = memStruct.field2;              // => 0x1234
 var str = memStruct.text;               // => &quot;Hello structures!&quot;
 
-// get raw buffer
-var bytes = mem.uint8;
-var arrBuffer = mem.buffer;</code></pre><p>Nested structure is possible (and recursively):</p>
+// get the raw byte buffer
+var bytes = memStruct.uint8;
+var arrBuffer = memStruct.buffer;</code></pre><p>Nested structure is possible (and recursively):</p>
 <pre class="prettyprint source lang-javascript"><code>var defStruct2 = ezStruct.define(&quot;myStruct2&quot;);
 
-// Define an existing structure defintion as field in this def.
+// Define an existing structure definition as field in this definition
 defStruct2.def(t.STRUCT, &quot;subStruct&quot;, &quot;myStruct&quot;);    // type, field name, def. name
 defStruct2.def(t.BOOL  , &quot;status&quot;);                   // etc.
 // ...
 
 // allocate a buffer for the new defined structure
-var memStruct2 = ezStruct.alloc(&quot;myStruct2&quot;, true);   // use little-endian
+var memStruct2 = ezStruct.alloc(&quot;myStruct2&quot;, true);   // true = use little-endian
 
-// access nested struct:
+// access nested struct using chained propterties.
+// Data written to same buffer as main structure.
 memStruct2.subStruct.text = &quot;Hello sub-structure!&quot;;</code></pre><h2>Also see</h2><ul>
-<li><a href="https://github.com/epistemex/ezBuffer">ezBuffers</a> enhanced data-view. Includes bit-tools (ezBits).</li>
+<li><a href="https://github.com/epistemex/ezBuffer">ezBuffers</a> - enhanced data-view. Includes bit-tools (ezBits).</li>
 </ul>
 <h2>Issues</h2><p>See the <a href="https://github.com/epistemex/ezStruct/issues">issue tracker</a> for details.</p>
 <h2>Contributors</h2><p>See <a href="https://github.com/epistemex/ezStruct/graphs/master">contributors</a> here.</p>
