@@ -13,12 +13,15 @@ efficient way.
 Features
 --------
 - Define unlimited structures by name
+- Define optional default values for each field
 - Allocate memory for structures by name, size by definitions.
 - Easy to define field types, names and sizes.
 - Multi-level nested structures is supported
 - Nested structures accessed using chained properties
 - Read/write to/from structure fields using properties
 - Supports char, string, struct, integers, floats fields
+- Supports bit-field packing (unsigned 8 and 16 types).
+- Export definitions as C-struct strings.
 - Several convenient aliases for the enumerated types
 
 All data is written/read directly to/from the underlying ArrayBuffer
@@ -41,50 +44,88 @@ and memory allocations of those definitions.
 
 To define a new structure simply call:
 ```javascript
-var defStruct = ezStruct.define("myStruct");
+var s1 = ezStruct.define("myStruct1");
 var t = ezStruct.enums;
 
 // define fields
-defStruct.def(t.UINT32, "field1");
-defStruct.def(t.UINT16, "field2");
-defStruct.def(t.STRING, "text", 100);   // NUL-terminated UTF8 string, max 100 bytes
-defStruct.def(t.CHAR  , "data", 100);   // raw char (byte) buffer
+s1.def(t.UINT32, "field1");
+s1.def(t.UINT16, "field2");
+s1.def(t.STRING, "text", 100);          // NUL-terminated UTF8 string, max 100 bytes
+s1.def(t.CHAR  , "data", 100);          // raw char (byte) buffer
 ```
 
 Next, create the actual memory byte-buffer like this. This approach
 allows you to create several independent buffers for the same definitions:
 ```javascript
-var memStruct = ezStruct.alloc("myStruct");
+var m1 = ezStruct.alloc("myStruct1");
 
 // set fields
-memStruct.field1 = 0x12345678;
-memStruct.field2 = 0x1234;
-memStruct.text = "Hello structures!";
+m1.field1 = 0x12345678;
+m1.field2 = 0x1234;
+m1.text = "Hello structures!";
 
 // read back
-var v1 = memStruct.field2;              // => 0x1234
-var str = memStruct.text;               // => "Hello structures!"
+var v1 = m1.field2;                     // => 0x1234
+var str = m1.text;                      // => "Hello structures!"
 
 // get the raw byte buffer
-var bytes = memStruct.uint8;
-var arrBuffer = memStruct.buffer;
+var bytes = m1.uint8;
+var arrBuffer = m1.buffer;
 ```
 
 Nested structure is possible (and recursively):
 ```javascript
-var defStruct2 = ezStruct.define("myStruct2");
+var s2 = ezStruct.define("myStruct2");
 
 // Define an existing structure definition as field in this definition
-defStruct2.def(t.STRUCT, "subStruct", "myStruct");    // type, field name, def. name
-defStruct2.def(t.BOOL  , "status");                   // etc.
+s2.def(t.STRUCT, "subStruct", "myStruct1");   // type, field name, def. name
+s2.def(t.BOOL  , "status");                   // etc.
 // ...
 
 // allocate a buffer for the new defined structure
-var memStruct2 = ezStruct.alloc("myStruct2", true);   // true = use little-endian
+var m2 = ezStruct.alloc(s2, {le: true});      // use def. for name, true = use little-endian
 
 // access nested struct using chained propterties.
 // Data written to same buffer as main structure.
-memStruct2.subStruct.text = "Hello sub-structure!";
+m2.subStruct.text = "Hello sub-structure!";
+```
+
+ezStruct also has bit-field support to pack flags tight to create
+very compact buffers:
+```javascript
+var bits = ezStruct.define("myFlags");
+
+// pack into Uint8
+bits.def(t.BITS8, "bitFld1", 1);                // 1 bit width
+bits.def(t.BITS8, "bitFld2", 3);                // 3 bits width
+bits.def(t.BITS8, null, 0);                     // align to next byte
+bits.def(t.BITS8, "bitFld3", 2);                // 2 bits width
+
+// pack into Uint16
+bits.def(t.BITS16, "bitFld4", 4);               // 4 bits width
+bits.def(t.BITS16, "bitFld5", 4);               // 4 bits width
+bits.def(t.BITS16, "bitFld6", 2);               // 2 bits width
+bits.def(t.BITS16, "bitFld7", 6);               // 6 bits width
+
+var bitMem = ezStruct.alloc(bits);              // allocates 4 bytes
+bitMem.bitFld6 = 3;                             // sets all bits in bitFld6
+```
+
+Export a definition as C-struct string:
+```javascript
+var bits = ezStruct.define("myFlags");
+var txt = ezStruct.defToC(bits);
+/* =>
+ struct myFlags {
+    unsigned char bitFld1 : 1;
+    unsigned char bitFld2 : 3;
+    unsigned char :0;
+    unsigned char bitFld3 : 2;
+    unsigned int bitFld4 : 4;
+    unsigned int bitFld5 : 4;
+    unsigned int bitFld6 : 2
+    unsigned int bitFld7 : 6
+ };
 ```
 
 

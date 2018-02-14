@@ -1,6 +1,14 @@
 Change log for ezStruct
 -----------------------
 
+0.3.0-alpha
+ADD: Bit-fields (unsigned 8 and 16 bit packs)
+ADD: Allow optional default values for definitions
+ADD: Export def. to C-struct string
+ADD: Can pass structure def. directly to alloc() instead of string name
+WRN: endianess option to alloc() changed to object. le -> {le: ..}.
+FIX: buffer offsets for deep level sub-structures
+
 0.2.0-alpha
 ADD: clone() clones a allocated structure and its data
 ADD: fromBuffer() creates a struct def. and fills with data from buffer

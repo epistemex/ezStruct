@@ -40,7 +40,7 @@
 			<li class="dropdown">
 				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="global.html#def">def</a></li><li><a href="global.html#enums">enums</a></li>
+					<li><a href="global.html#def">def</a></li><li><a href="global.html#enums">enums</a></li><li><a href="global.html#name">name</a></li>
 				</ul>
 			</li>
 			
@@ -100,12 +100,15 @@ parsing.</p>
 efficient way.</p>
 <h2>Features</h2><ul>
 <li>Define unlimited structures by name</li>
+<li>Define optional default values for each field</li>
 <li>Allocate memory for structures by name, size by definitions.</li>
 <li>Easy to define field types, names and sizes.</li>
 <li>Multi-level nested structures is supported</li>
 <li>Nested structures accessed using chained properties</li>
 <li>Read/write to/from structure fields using properties</li>
 <li>Supports char, string, struct, integers, floats fields</li>
+<li>Supports bit-field packing (unsigned 8 and 16 types).</li>
+<li>Export definitions as C-struct strings.</li>
 <li>Several convenient aliases for the enumerated types</li>
 </ul>
 <p>All data is written/read directly to/from the underlying ArrayBuffer
@@ -119,42 +122,72 @@ which allows for efficient memory use as well fast read and write.</p>
 <h2>Usage</h2><p>The <code>ezStruct</code> is a global static object that manage structure definitions
 and memory allocations of those definitions.</p>
 <p>To define a new structure simply call:</p>
-<pre class="prettyprint source lang-javascript"><code>var defStruct = ezStruct.define(&quot;myStruct&quot;);
+<pre class="prettyprint source lang-javascript"><code>var s1 = ezStruct.define(&quot;myStruct1&quot;);
 var t = ezStruct.enums;
 
 // define fields
-defStruct.def(t.UINT32, &quot;field1&quot;);
-defStruct.def(t.UINT16, &quot;field2&quot;);
-defStruct.def(t.STRING, &quot;text&quot;, 100);   // NUL-terminated string, max 100 bytes
-defStruct.def(t.CHAR  , &quot;data&quot;, 100);   // raw char (byte) buffer</code></pre><p>Next, create the actual memory byte-buffer like this. This approach
+s1.def(t.UINT32, &quot;field1&quot;);
+s1.def(t.UINT16, &quot;field2&quot;);
+s1.def(t.STRING, &quot;text&quot;, 100);          // NUL-terminated UTF8 string, max 100 bytes
+s1.def(t.CHAR  , &quot;data&quot;, 100);          // raw char (byte) buffer</code></pre><p>Next, create the actual memory byte-buffer like this. This approach
 allows you to create several independent buffers for the same definitions:</p>
-<pre class="prettyprint source lang-javascript"><code>var memStruct = ezStruct.alloc(&quot;myStruct&quot;);
+<pre class="prettyprint source lang-javascript"><code>var m1 = ezStruct.alloc(&quot;myStruct1&quot;);
 
 // set fields
-memStruct.field1 = 0x12345678;
-memStruct.field2 = 0x1234;
-memStruct.text = &quot;Hello structures!&quot;;
+m1.field1 = 0x12345678;
+m1.field2 = 0x1234;
+m1.text = &quot;Hello structures!&quot;;
 
 // read back
-var v1 = memStruct.field2;              // => 0x1234
-var str = memStruct.text;               // => &quot;Hello structures!&quot;
+var v1 = m1.field2;                     // => 0x1234
+var str = m1.text;                      // => &quot;Hello structures!&quot;
 
 // get the raw byte buffer
-var bytes = memStruct.uint8;
-var arrBuffer = memStruct.buffer;</code></pre><p>Nested structure is possible (and recursively):</p>
-<pre class="prettyprint source lang-javascript"><code>var defStruct2 = ezStruct.define(&quot;myStruct2&quot;);
+var bytes = m1.uint8;
+var arrBuffer = m1.buffer;</code></pre><p>Nested structure is possible (and recursively):</p>
+<pre class="prettyprint source lang-javascript"><code>var s2 = ezStruct.define(&quot;myStruct2&quot;);
 
 // Define an existing structure definition as field in this definition
-defStruct2.def(t.STRUCT, &quot;subStruct&quot;, &quot;myStruct&quot;);    // type, field name, def. name
-defStruct2.def(t.BOOL  , &quot;status&quot;);                   // etc.
+s2.def(t.STRUCT, &quot;subStruct&quot;, &quot;myStruct1&quot;);   // type, field name, def. name
+s2.def(t.BOOL  , &quot;status&quot;);                   // etc.
 // ...
 
 // allocate a buffer for the new defined structure
-var memStruct2 = ezStruct.alloc(&quot;myStruct2&quot;, true);   // true = use little-endian
+var m2 = ezStruct.alloc(s2, {le: true});      // use def. for name, true = use little-endian
 
 // access nested struct using chained propterties.
 // Data written to same buffer as main structure.
-memStruct2.subStruct.text = &quot;Hello sub-structure!&quot;;</code></pre><h2>Also see</h2><ul>
+m2.subStruct.text = &quot;Hello sub-structure!&quot;;</code></pre><p>ezStruct also has bit-field support to pack flags tight to create
+very compact buffers:</p>
+<pre class="prettyprint source lang-javascript"><code>var bits = ezStruct.define(&quot;myFlags&quot;);
+
+// pack into Uint8
+bits.def(t.BITS8, &quot;bitFld1&quot;, 1);                // 1 bit width
+bits.def(t.BITS8, &quot;bitFld2&quot;, 3);                // 3 bits width
+bits.def(t.BITS8, null, 0);                     // align to next byte
+bits.def(t.BITS8, &quot;bitFld3&quot;, 2);                // 2 bits width
+
+// pack into Uint16
+bits.def(t.BITS16, &quot;bitFld4&quot;, 4);               // 4 bits width
+bits.def(t.BITS16, &quot;bitFld5&quot;, 4);               // 4 bits width
+bits.def(t.BITS16, &quot;bitFld6&quot;, 2);               // 2 bits width
+bits.def(t.BITS16, &quot;bitFld7&quot;, 6);               // 6 bits width
+
+var bitMem = ezStruct.alloc(bits);              // allocates 4 bytes
+bitMem.bitFld6 = 3;                             // sets all bits in bitFld6</code></pre><p>Export a definition as C-struct string:</p>
+<pre class="prettyprint source lang-javascript"><code>var bits = ezStruct.define(&quot;myFlags&quot;);
+var txt = ezStruct.defToC(bits);
+/* =>
+ struct myFlags {
+    unsigned char bitFld1 : 1;
+    unsigned char bitFld2 : 3;
+    unsigned char :0;
+    unsigned char bitFld3 : 2;
+    unsigned int bitFld4 : 4;
+    unsigned int bitFld5 : 4;
+    unsigned int bitFld6 : 2
+    unsigned int bitFld7 : 6
+ };</code></pre><h2>Also see</h2><ul>
 <li><a href="https://github.com/epistemex/ezBuffer">ezBuffers</a> - enhanced data-view. Includes bit-tools (ezBits).</li>
 </ul>
 <h2>Issues</h2><p>See the <a href="https://github.com/epistemex/ezStruct/issues">issue tracker</a> for details.</p>
@@ -213,7 +246,7 @@ memStruct2.subStruct.text = &quot;Hello sub-structure!&quot;;</code></pre><h2>Al
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a>
 	
-		on Tue Feb 13th 2018
+		on Wed Feb 14th 2018
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
