@@ -1,5 +1,5 @@
 /*!
-	ezStruct ver 0.3.0-alpha
+	ezStruct ver 0.3.1-alpha
 	Copyright (c) 2018 Epistemex
 	www.epistemex.com
 */
@@ -72,7 +72,6 @@ var ezStruct = (function() {
      * @memberOf ezStruct
      */
     define: function(name) {
-
       var struct = {name: name, defs: []}, i;
 
       // check if name is in use
@@ -111,9 +110,8 @@ var ezStruct = (function() {
           }
           defs.push({name: name, type: type, opt: opt, opt2: opt2})
         }
-
-      }
-    },
+      } // return
+    },  // define()
 
     /**
      * Allocates the actual memory for the structure and provides
@@ -272,22 +270,12 @@ var ezStruct = (function() {
         if (def.type !== t.BIT8 && def.type !== t.BIT16) bPos = size<<3;
 
         // get default value if any
-        if (def.type !== t.STRUCT && def.type !== t.BIT8 && def.type !== t.BIT16)
-          getDefault(def);
+        if (def.type !== t.STRUCT) getDefault(def);
       });
 
+      // Final alignment for bit defs.
       if (hasBits8) size = flushBits(size, 1);
       else if (hasBits16) size = flushBits(size, 2);
-
-      function flushBits(size, bytes) {
-        hasBits8 = hasBits16 = false;
-        return size + bytes
-      }
-
-      function getDefault(def) {
-        var value = (def.type === t.CHAR || def.type === t.STRING) ? def.opt2 : def.opt;
-        if (typeof value !== "undefined") defaults.push({name: def.name, value: value})
-      }
 
       // setup buffers, name and length properties
       buffer = options.buffer ? options.buffer : new ArrayBuffer(size);
@@ -301,27 +289,41 @@ var ezStruct = (function() {
       mem.length = mem.uint8.length;
       mem.subs = subs;
       mem.hasDefaults = defaults.length > 0;
+      mem.id = Date.now();
 
       // parse and change references for sub-structures if any
-      setSubs(subs);
+      setSubs(subs, 0);
 
-      function setSubs(subs) {
+      // init with defaults
+      defaults.forEach(function(def) {mem[def.name] = def.value});
+
+      function setSubs(subs, offset) {
         subs.forEach(function(sub) {
           var struct = sub.struct, oUint8;
           if (struct.hasDefaults) oUint8 = sub.struct.uint8;  // preserve defaults
 
-          struct.offset += sub.pos;
+          struct.offset = offset + sub.pos;
           struct.buffer = buffer;
           struct.uint8 = new Uint8Array(buffer, struct.offset, sub.len);
           struct.view = new DataView(buffer, struct.offset, sub.len);
 
-          if (struct.hasDefaults) sub.struct.uint8.set(oUint8);  // set back defaults
-          setSubs(struct.subs);
+          if (struct.hasDefaults) sub.struct.uint8.set(oUint8);   // set back defaults
+          setSubs(struct.subs, struct.offset);                    // recursive offset
         });
       }
 
-      // init with defaults
-      defaults.forEach(function(def) {mem[def.name] = def.value;});
+      function flushBits(size, bytes) {
+        hasBits8 = hasBits16 = false;
+        return size + bytes
+      }
+
+      function getDefault(def) {
+        var value = (def.type === t.CHAR ||
+          def.type === t.STRING ||
+          def.type === t.BIT8 ||
+          def.type === t.BIT16) ? def.opt2 : def.opt;
+        if (typeof value !== "undefined") defaults.push({name: def.name, value: value})
+      }
 
       /*
           This will add a property with setter and getter to the mem
@@ -418,7 +420,12 @@ var ezStruct = (function() {
      * @memberOf ezStruct
      */
     defToC: function(name) {
-      var struct = typeof name === "string" ? ezStruct.getDef(name) : name, txt, t = ezStruct.enums;
+      var
+        struct = typeof name === "string" ? ezStruct.getDef(name) : name,
+        txt, t = ezStruct.enums,
+        types = ["unsigned char", "unsigned int", "unsigned long", "unsigned long long", "char", "int", "long", "long long",
+                 "float", "double", "unsigned char", "unsigned int", "char", "unsigned char", "char", "struct"];
+
       if (!struct) throw "No definition with that name.";
 
       // open
@@ -428,13 +435,11 @@ var ezStruct = (function() {
       struct.defs.forEach(function(def) {txt += makeLine(def)});
 
       function makeLine(def) {
-        var types = ["unsigned char", "unsigned int", "unsigned long", "unsigned long long", "char", "int", "long", "long long",
-                     "float", "double", "unsigned char", "unsigned int", "char", "unsigned char", "char", "struct"],
-          name = types[def.type];
+        var name = types[def.type];
 
         return "   " + (name === "struct" ? (typeof def.opt === "string" ? def.opt : def.opt.name) : name)
                 + " " + (def.name || "")
-                + (def.type === t.BIT8 || def.type === t.BIT8 ? (def.name && def.name.length ? " : " : ":") + def.opt : "")
+                + (def.type === t.BIT8 || def.type === t.BIT16 ? (def.name && def.name.length ? " : " : ":") + def.opt : "")
                 + (def.type === t.CHAR || def.type === t.STRING ? "[" + def.opt + "]" : "")
                 + (def.type < t.BIT8 && def.opt ? " = " + def.opt : "")
                 + (def.type > t.CHAR && def.opt2 ? " = \"" + def.opt2 + "\"" : "")

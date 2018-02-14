@@ -1,6 +1,12 @@
 Change log for ezStruct
 -----------------------
 
+0.3.1-alpha
+ADD: Enabled default values for BIT types
+FIX: Recursive struct offsets with depth level > 1
+FIX: BIT16 type in defToC() line formatter.
+IMP: Internal refactoring.
+
 0.3.0-alpha
 ADD: Bit-fields (unsigned 8 and 16 bit packs)
 ADD: Allow optional default values for definitions
