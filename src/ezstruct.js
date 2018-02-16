@@ -1,5 +1,5 @@
 /*!
-	ezStruct ver 0.3.1-alpha
+	ezStruct ver 0.3.2-alpha
 	Copyright (c) 2018 Epistemex
 	www.epistemex.com
 */
@@ -109,6 +109,14 @@ var ezStruct = (function() {
             if (defs[i].name === name) throw "Field already exists.";
           }
           defs.push({name: name, type: type, opt: opt, opt2: opt2})
+        },
+
+        /**
+         * Get the byte size of the current definition.
+         */
+        sizeOf: function() {
+          // we are cheating here a bit (until refactoring since bits are a bit (no puns, promise) tricky)
+          return ezStruct.alloc(struct.name).length
         }
       } // return
     },  // define()
@@ -143,7 +151,7 @@ var ezStruct = (function() {
           It also references itself to access the buffer and view.
        */
       var
-        struct, i, buffer,
+        struct, buffer,
         size = 0,
         bPos = 0, // bit-position
         mem = {},
@@ -155,14 +163,8 @@ var ezStruct = (function() {
         _name = (typeof name === "string") ? name : name.name;
 
       // check name
-      for(i = 0; i < structs.length; i++) {
-        if (structs[i].name === _name) {
-          struct = structs[i];
-          break;
-        }
-      }
-
-      if (!struct) throw "Structure not defined.";
+      struct = ezStruct.getDef(_name);
+      if (!struct) throw "Unknown definition.";
 
       // loop through each definition in the struct
       struct.defs.forEach(function(def) {
@@ -176,36 +178,36 @@ var ezStruct = (function() {
         // check TYPE
         switch(def.type) {
           case t.UINT8:
-            _defProp(def.name, _getUINT8, _setUINT8, size, size + 1);
-            size++; break;
+            _defProp(def.name, _getUINT8, _setUINT8, size, ++size);
+            break;
 
           case t.UINT16:
-            _defProp(def.name, _getUINT16, _setUINT16, size, size + 2);
-            size += 2; break;
+            _defProp(def.name, _getUINT16, _setUINT16, size, (size += 2));
+            break;
 
           case t.UINT32:
-            _defProp(def.name, _getUINT32, _setUINT32, size, size + 4);
-            size += 4; break;
+            _defProp(def.name, _getUINT32, _setUINT32, size, (size += 4));
+            break;
 
           case t.INT8:
-            _defProp(def.name, _getINT8, _setINT8, size, size + 1);
-            size++; break;
+            _defProp(def.name, _getINT8, _setINT8, size, ++size);
+            break;
 
           case t.INT16:
-            _defProp(def.name, _getINT16, _setINT16, size, size + 2);
-            size += 2; break;
+            _defProp(def.name, _getINT16, _setINT16, size, (size += 2));
+            break;
 
           case t.INT32:
-            _defProp(def.name, _getINT32, _setINT32, size, size + 4);
-            size += 4; break;
+            _defProp(def.name, _getINT32, _setINT32, size, (size += 4));
+            break;
 
           case t.FLOAT32:
-            _defProp(def.name, _getFLOAT32, _setFLOAT32, size, size + 4);
-            size += 4; break;
+            _defProp(def.name, _getFLOAT32, _setFLOAT32, size, (size += 4));
+            break;
 
           case t.FLOAT64:
-            _defProp(def.name, _getFLOAT64, _setFLOAT64, size, size + 8);
-            size += 8; break;
+            _defProp(def.name, _getFLOAT64, _setFLOAT64, size, (size += 8));
+            break;
 
           case t.CHAR:  // for now use uint8
           case t.UCHAR:
@@ -217,7 +219,7 @@ var ezStruct = (function() {
             size += def.opt; break;
 
           case t.STRUCT:
-            var subStruct = ezStruct.alloc(def.opt, le);
+            var subStruct = ezStruct.alloc(def.opt, {le: le});
             subs.push({struct: subStruct, pos: size + options.offset, len: subStruct.uint8.length});
             Object.defineProperty(mem, def.name, {
               get: _getSTRUCT.bind({struct: subStruct})
@@ -226,12 +228,15 @@ var ezStruct = (function() {
             break;
 
           case t.BIT8:
+            hasBits8 = true;
+            //... refactor using function
           case t.BIT16:
-            // todo needs refactoring...
+            // todo needs refactoring... -> function (width as arg.)
             var
-              isBit8 = def.type === t.BIT8,
+              isBit8 = hasBits8,
               width = isBit8 ? 8 : 16,
-              bOffset = bPos - (size<<3), offset = bOffset % width, mask = 0, iMask, _bind;
+              bOffset = bPos - (size<<3), offset = bOffset % width,
+              mask = 0, _bind, i;
 
             if (isBit8) hasBits8 = true;
             else hasBits16 = true;
@@ -239,10 +244,9 @@ var ezStruct = (function() {
             if (def.opt) {
               if (def.name && def.name.length) {
                 // build mask based on offset and number of bits
-                for(var i = bOffset; i < bOffset + def.opt; i++) mask |= 1<<i;
-                iMask = ~mask;
+                for(i = bOffset; i < bOffset + def.opt; i++) mask |= 1<<i;
 
-                _bind = {m: mem, pos: size, offset: offset, width: def.opt, mask: mask};
+                _bind = {m: mem, pos: size, offset: offset, mask: mask};
                 Object.defineProperty(mem, def.name, {
                   get: (isBit8 ? _getBIT8 : _getBIT16).bind(_bind),
                   set: (isBit8 ? _setBIT8 : _setBIT16).bind(_bind)
@@ -278,18 +282,17 @@ var ezStruct = (function() {
       else if (hasBits16) size = flushBits(size, 2);
 
       // setup buffers, name and length properties
-      buffer = options.buffer ? options.buffer : new ArrayBuffer(size);
+      buffer = options.buffer ? options.buffer : (options._rec ? null : new ArrayBuffer(size));
       if (buffer.byteLength < size) throw "Buffer too small.";
 
       mem.buffer = buffer;
-      mem.offset = options.offset;
+      mem.offset = options.offset|0;
       mem.view = new DataView(buffer, mem.offset, size);
       mem.uint8 = new Uint8Array(buffer, mem.offset, size);
       mem.name = struct.name;
       mem.length = mem.uint8.length;
-      mem.subs = subs;
-      mem.hasDefaults = defaults.length > 0;
-      mem.id = Date.now();
+      mem._subs = subs;
+      mem._dflt = defaults.length > 0;
 
       // parse and change references for sub-structures if any
       setSubs(subs, 0);
@@ -300,15 +303,15 @@ var ezStruct = (function() {
       function setSubs(subs, offset) {
         subs.forEach(function(sub) {
           var struct = sub.struct, oUint8;
-          if (struct.hasDefaults) oUint8 = sub.struct.uint8;  // preserve defaults
+          if (struct._dflt) oUint8 = sub.struct.uint8;  // preserve defaults
 
           struct.offset = offset + sub.pos;
           struct.buffer = buffer;
           struct.uint8 = new Uint8Array(buffer, struct.offset, sub.len);
           struct.view = new DataView(buffer, struct.offset, sub.len);
 
-          if (struct.hasDefaults) sub.struct.uint8.set(oUint8);   // set back defaults
-          setSubs(struct.subs, struct.offset);                    // recursive offset
+          if (struct._dflt) sub.struct.uint8.set(oUint8);   // set back defaults
+          setSubs(struct._subs, struct.offset);                    // recursive offset
         });
       }
 
@@ -403,7 +406,7 @@ var ezStruct = (function() {
      */
     getDef: function(name) {
       for(var i = 0; i < structs.length; i++) {
-        if (structs[i].name === name) return structs[i]
+        if (structs[i].name === name) return structs[i];
       }
       return null
     },
@@ -423,10 +426,11 @@ var ezStruct = (function() {
       var
         struct = typeof name === "string" ? ezStruct.getDef(name) : name,
         txt, t = ezStruct.enums,
-        types = ["unsigned char", "unsigned int", "unsigned long", "unsigned long long", "char", "int", "long", "long long",
-                 "float", "double", "unsigned char", "unsigned int", "char", "unsigned char", "char", "struct"];
+        unsigned = "unsigned ", LONG = "long", INT = "int", CHAR = "char",  // for "compression", uppercase due to bug in minimizer
+        types = [unsigned + CHAR, unsigned + INT, unsigned + LONG, unsigned + LONG + " " + LONG, CHAR, INT, LONG, LONG + " " + LONG,
+                 "float", "double", unsigned + CHAR, unsigned + INT, CHAR, unsigned + CHAR, CHAR, "struct"];
 
-      if (!struct) throw "No definition with that name.";
+      if (!struct) throw "Unknown definition.";
 
       // open
       txt = "struct " + struct.name + " {\n";
@@ -479,7 +483,7 @@ var ezStruct = (function() {
      */
     clone: function(memStruct) {
       var mem = ezStruct.alloc(memStruct.name);
-      mem.uint8.set(memStruct.uint8.slice(0, mem.length));
+      mem.uint8.set(memStruct.uint8.slice(0));
       return mem
     }
 

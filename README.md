@@ -1,6 +1,5 @@
 ﻿ezStruct
-======
-
+========
 Create virtual structures for binary data in JavaScript.
 
 Virtual structures are very useful for binary data packets and file
@@ -8,6 +7,8 @@ parsing.
 
 Store structured data as bytes and send over the net in an highly
 efficient way.
+
+NOTE: ALPHA version.
 
 
 Features
@@ -26,7 +27,6 @@ Features
 
 All data is written/read directly to/from the underlying ArrayBuffer
 which allows for efficient memory use as well fast read and write.
-
 
 Install
 -------
@@ -73,7 +73,15 @@ var bytes = m1.uint8;
 var arrBuffer = m1.buffer;
 ```
 
-Nested structure is possible (and recursively):
+You can define defaults too that are initialized when `alloc()` is called:
+
+```javascript
+s1.def(t.UINT32, "field1", 0x12345678);
+s1.def(t.INT   , "field2", -1);
+s1.def(t.STRING, "text", 100, "Hello");
+```
+
+Nested structure is possible (recursively as well):
 ```javascript
 var s2 = ezStruct.define("myStruct2");
 
@@ -128,28 +136,20 @@ var txt = ezStruct.defToC(bits);
  };
 ```
 
-
 Also see
 --------
-
 - [ezBuffers](https://github.com/epistemex/ezBuffer) - enhanced data-view. Includes bit-tools (ezBits).
 
 
 Issues
 ------
+- Circular structures definitions (sub-struct) currently not handled (don't define circular structures!).
 
 See the [issue tracker](https://github.com/epistemex/ezStruct/issues) for details.
 
 
-Contributors
-------------
-
-See [contributors](https://github.com/epistemex/ezStruct/graphs/master) here.
-
-
 License
 -------
-
 Released under [MIT license](http://choosealicense.com/licenses/mit/). You may use this class in both commercial and non-commercial projects provided that full header (minified and developer versions) is included.
 
 

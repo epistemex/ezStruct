@@ -1,6 +1,11 @@
 Change log for ezStruct
 -----------------------
 
+0.3.2-alpha
+ADD: sizeOf() method on definition object
+FIX: new option format for little-endian passed to sub-structure
+IMP: Internal refactoring and optimizations.
+
 0.3.1-alpha
 ADD: Enabled default values for BIT types
 FIX: Recursive struct offsets with depth level > 1
