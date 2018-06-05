@@ -32,9 +32,8 @@ Install
 -------
 **ezStruct** can be installed in various ways:
 
-- Git using HTTPS: `git clone https://github.com/epistemex/ezStruct.git`
-- Git using SSH: `git clone git@github.com:epistemex/ezStruct.git`
-- Download [zip archive](https://github.com/epistemex/ezStruct/archive/master.zip) and extract.
+- Git using HTTPS: `git clone https://gitlab.com/epistemex/ezStruct.git`
+- Git using SSH: `git clone git@gitlab.com:epistemex/ezStruct.git`
 
 
 Usage
@@ -138,14 +137,14 @@ var txt = ezStruct.defToC(bits);
 
 Also see
 --------
-- [ezBuffers](https://github.com/epistemex/ezBuffer) - enhanced data-view. Includes bit-tools (ezBits).
+- [ezBuffers](https://gitlab.com/epistemex/ezBuffer) - enhanced data-view. Includes bit-tools (ezBits).
 
 
 Issues
 ------
 - Circular structures definitions (sub-struct) currently not handled (don't define circular structures!).
 
-See the [issue tracker](https://github.com/epistemex/ezStruct/issues) for details.
+See the [issue tracker](https://gitlab.com/epistemex/ezStruct/issues/new) for details.
 
 
 License
