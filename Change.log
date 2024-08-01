@@ -1,6 +1,8 @@
 Change log for ezStruct
 -----------------------
 
+See git log for further changes.
+
 0.3.2-alpha
 ADD: sizeOf() method on definition object
 FIX: new option format for little-endian passed to sub-structure

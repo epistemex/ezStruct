@@ -1,5 +1,6 @@
 ﻿ezStruct
 ========
+
 Create virtual structures for binary data in JavaScript.
 
 Virtual structures are very useful for binary data packets and file
@@ -10,9 +11,9 @@ efficient way.
 
 NOTE: ALPHA version.
 
-
 Features
 --------
+
 - Define unlimited structures by name
 - Define optional default values for each field
 - Allocate memory for structures by name, size by definitions.
@@ -30,18 +31,20 @@ which allows for efficient memory use as well fast read and write.
 
 Install
 -------
+
 **ezStruct** can be installed in various ways:
 
-- Git using HTTPS: `git clone https://gitlab.com/epistemex/ezStruct.git`
-- Git using SSH: `git clone git@gitlab.com:epistemex/ezStruct.git`
-
+- Git using HTTPS: `git clone https://github.com/epistemex/ezStruct.git`
+- Git using SSH: `git clone git@github.com:epistemex/ezStruct.git`
 
 Usage
 -----
+
 The `ezStruct` is a global static object that manage structure definitions
 and memory allocations of those definitions.
 
 To define a new structure simply call:
+
 ```javascript
 var s1 = ezStruct.define("myStruct1");
 var t = ezStruct.enums;
@@ -55,8 +58,9 @@ s1.def(t.CHAR  , "data", 100);          // raw char (byte) buffer
 
 Next, create the actual memory byte-buffer like this. This approach
 allows you to create several independent buffers for the same definitions:
+
 ```javascript
-var m1 = ezStruct.alloc("myStruct1");
+var m1 = ezStruct.alloc(s1);
 
 // set fields
 m1.field1 = 0x12345678;
@@ -81,6 +85,7 @@ s1.def(t.STRING, "text", 100, "Hello");
 ```
 
 Nested structure is possible (recursively as well):
+
 ```javascript
 var s2 = ezStruct.define("myStruct2");
 
@@ -99,6 +104,7 @@ m2.subStruct.text = "Hello sub-structure!";
 
 ezStruct also has bit-field support to pack flags tight to create
 very compact buffers:
+
 ```javascript
 var bits = ezStruct.define("myFlags");
 
@@ -119,6 +125,7 @@ bitMem.bitFld6 = 3;                             // sets all bits in bitFld6
 ```
 
 Export a definition as C-struct string:
+
 ```javascript
 var bits = ezStruct.define("myFlags");
 var txt = ezStruct.defToC(bits);
@@ -135,23 +142,20 @@ var txt = ezStruct.defToC(bits);
  };
 ```
 
-Also see
---------
-- [ezBuffers](https://gitlab.com/epistemex/ezBuffer) - enhanced data-view. Includes bit-tools (ezBits).
-
-
 Issues
-------
+--------
+
 - Circular structures definitions (sub-struct) currently not handled (don't define circular structures!).
 
 See the [issue tracker](https://gitlab.com/epistemex/ezStruct/issues/new) for details.
 
-
 License
 -------
-Released under [MIT license](http://choosealicense.com/licenses/mit/). You may use this class in both commercial and non-commercial projects provided that full header (minified and developer versions) is included.
 
+Released under [MIT license](http://choosealicense.com/licenses/mit/). You may use this class in
+both commercial and non-commercial projects provided that full header (minified and developer
+versions) is included.
 
-*&copy; Epistemex 2018*
+*&copy; Epistemex 2018, 2024*
 
 ![Epistemex](https://i.imgur.com/GP6Q3v8.png)

@@ -1,6 +1,6 @@
 /*!
 	ezStruct ver 0.3.2-alpha
-	Copyright (c) 2018 Epistemex
+	Copyright (c) 2018, 2024 Epistemex
 	www.epistemex.com
 */
 
